@@ -10,9 +10,10 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+import numpy as np
 import joblib
-from prefect import task, flow
+from prefect import task, flow, get_run_logger
 
 # ---------- Setup timestamped directories ----------
 run_time = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -86,7 +87,7 @@ def split_data(df: pd.DataFrame, target_col="SalePrice"):
     X_imputed = pd.concat([X_numeric, X_categorical], axis=1)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X_imputed, y, test_size=0.2, random_state=42
+        X_imputed, y, test_size=0.3, random_state=42
     )
     logging.info(f"Split done. Train shape: {X_train.shape}, Test shape: {X_test.shape}")
 
@@ -116,6 +117,7 @@ def train_models(X_train, y_train):
     rf = RandomForestRegressor(n_estimators=100, random_state=42)
     rf.fit(X_train_processed, y_train)
 
+    # Save models and preprocessor
     joblib.dump(lr, os.path.join(ARTIFACT_DIR, "linear_regression.pkl"))
     joblib.dump(rf, os.path.join(ARTIFACT_DIR, "random_forest.pkl"))
     joblib.dump(preprocessor, os.path.join(ARTIFACT_DIR, "preprocessor.pkl"))
@@ -125,7 +127,8 @@ def train_models(X_train, y_train):
 
 @task
 def evaluate_models(models, preprocessor, X_test, y_test):
-    """Evaluate trained models and save metrics."""
+    """Evaluate trained models, save metrics, and log them to Prefect Cloud."""
+    logger = get_run_logger()
     X_test_processed = preprocessor.transform(X_test)
     metrics = {}
 
@@ -133,17 +136,22 @@ def evaluate_models(models, preprocessor, X_test, y_test):
         y_pred = model.predict(X_test_processed)
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
-        metrics[name] = {"MSE": mse, "R2": r2}
+        mae = mean_absolute_error(y_test, y_pred)
+        rmse = np.sqrt(mse)
+        metrics[name] = {"MSE": mse, "R2": r2, "MAE": mae, "RMSE": rmse}
 
-    metrics_path = os.path.join(ARTIFACT_DIR, "evaluation_metrics.txt")
-    with open(metrics_path, "w") as f:
+        # Log to Prefect Cloud
+        logger.info(f"{name} Metrics: MSE={mse:.2f}, R2={r2:.4f}, MAE={mae:.2f}, RMSE={rmse:.2f}")
+
+    # Save metrics locally
+    metrics_path_txt = os.path.join(ARTIFACT_DIR, "evaluation_metrics.txt")
+    with open(metrics_path_txt, "w") as f:
         for model_name, metric_values in metrics.items():
             f.write(f"{model_name}:\n")
             for k, v in metric_values.items():
                 f.write(f"  {k}: {v}\n")
             f.write("\n")
 
-    logging.info(f"Evaluation metrics saved in {metrics_path}")
     return metrics
 
 # ---------- Flow ----------
