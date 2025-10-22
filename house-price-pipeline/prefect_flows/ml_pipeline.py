@@ -1,104 +1,157 @@
-from prefect import flow, task
+# prefect_flows/ml_pipeline.py
+
 import pandas as pd
+import os
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
 from sklearn.metrics import mean_squared_error, r2_score
-import numpy as np
 import joblib
-import os
-from datetime import datetime
+from prefect import task, flow
+
+# ---------- Tasks ----------
 
 @task
-def load_processed_data(path='data/train.csv'):
-    df = pd.read_csv(path)
-    df = df.fillna(df.median(numeric_only=True))
-    df = pd.get_dummies(df)
-    print(f'📥 Loaded and preprocessed data from {path}')
+def load_processed_data(file_path="data/train.csv") -> pd.DataFrame:
+    """Load processed data from CSV."""
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"{file_path} does not exist!")
+    data = pd.read_csv(file_path)
+    print(f"Data loaded with shape: {data.shape}")
+    return data
+
+@task
+def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
+    """Preprocess the dataset without removing the target column."""
+    # Fill missing numerical values with median
+    numeric_cols = df.select_dtypes(include=["float64", "int64"]).columns
+    for col in numeric_cols:
+        df[col] = df[col].fillna(df[col].median())
+
+    # Encode 'ocean_proximity' categorical feature if exists
+    if "ocean_proximity" in df.columns:
+        df["ocean_proximity"] = df["ocean_proximity"].map({
+            "NEAR BAY": 1,
+            "INLAND": 0,
+            "NEAR OCEAN": 2,
+            "ISLAND": 3,
+            "1H OCEAN": 4
+        }).fillna(0)
+
+    # Create rooms_per_household feature if possible
+    if "total_rooms" in df.columns and "households" in df.columns:
+        df["rooms_per_household"] = df["total_rooms"] / df["households"]
+
+    print(f"Preprocessing done. Columns now: {df.columns.tolist()}")
     return df
 
 @task
-def split_data(df):
-    X = df.drop('SalePrice', axis=1)
-    y = df['SalePrice']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-    print(f'⚙️ Split data: Train={X_train.shape}, Test={X_test.shape}')
+def split_data(df: pd.DataFrame, target_col="SalePrice"):
+    """Split dataset into train and test sets with proper imputation."""
+    if target_col not in df.columns:
+        raise ValueError(f"Target column '{target_col}' not found! Available columns: {df.columns.tolist()}")
+
+    X = df.drop(columns=[target_col])
+    y = df[target_col]
+
+    # Separate numeric and categorical columns
+    numeric_cols = X.select_dtypes(include=["int64", "float64"]).columns
+    categorical_cols = X.select_dtypes(include=["object"]).columns
+
+    # Impute numeric columns with median
+    num_imputer = SimpleImputer(strategy="median")
+    X_numeric = pd.DataFrame(num_imputer.fit_transform(X[numeric_cols]), columns=numeric_cols)
+
+    # Impute categorical columns with mode (most frequent)
+    cat_imputer = SimpleImputer(strategy="most_frequent")
+    X_categorical = pd.DataFrame(cat_imputer.fit_transform(X[categorical_cols]), columns=categorical_cols)
+
+    # Combine numeric + categorical
+    X_imputed = pd.concat([X_numeric, X_categorical], axis=1)
+
+    # Split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_imputed, y, test_size=0.2, random_state=42
+    )
+    print(f"Split done. Train shape: {X_train.shape}, Test shape: {X_test.shape}")
     return X_train, X_test, y_train, y_test
 
 @task
-def train_models(X_train, y_train, models_folder):
+def train_models(X_train, y_train, save_dir="artifacts/ml"):
+    """Train Linear Regression and Random Forest models with proper encoding."""
+    os.makedirs(save_dir, exist_ok=True)
+
+    # Identify numeric and categorical columns
+    numeric_cols = X_train.select_dtypes(include=["int64", "float64"]).columns
+    categorical_cols = X_train.select_dtypes(include=["object"]).columns
+
+    # One-hot encode categorical columns
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_cols)
+        ],
+        remainder="passthrough"  # keep numeric columns as they are
+    )
+
+    X_train_processed = preprocessor.fit_transform(X_train)
+
+    # Linear Regression
     lr = LinearRegression()
+    lr.fit(X_train_processed, y_train)
+    joblib.dump(lr, os.path.join(save_dir, "linear_regression.pkl"))
+
+    # Random Forest
     rf = RandomForestRegressor(n_estimators=100, random_state=42)
+    rf.fit(X_train_processed, y_train)
+    joblib.dump(rf, os.path.join(save_dir, "random_forest.pkl"))
 
-    lr.fit(X_train, y_train)
-    rf.fit(X_train, y_train)
+    # Save preprocessor for test data
+    joblib.dump(preprocessor, os.path.join(save_dir, "preprocessor.pkl"))
 
-    lr_path = os.path.join(models_folder, 'linear_regression.pkl')
-    rf_path = os.path.join(models_folder, 'random_forest.pkl')
-    joblib.dump(lr, lr_path)
-    joblib.dump(rf, rf_path)
+    print(f"Models trained and saved in {save_dir}")
+    return lr, rf, preprocessor
 
-    print(f'💾 Saved Linear Regression model at {lr_path}')
-    print(f'💾 Saved Random Forest model at {rf_path}')
-    return lr, rf
 @task
-def evaluate_models(lr, rf, X_test, y_test, metrics_folder):
-    preds_lr = lr.predict(X_test)
-    preds_rf = rf.predict(X_test)
+def evaluate_models(models, preprocessor, X_test, y_test, save_dir="artifacts/ml"):
+    """Evaluate trained models and save metrics."""
+    os.makedirs(save_dir, exist_ok=True)
+    metrics = {}
 
-    metrics = {
-        'Linear Regression': {
-            'RMSE': np.sqrt(mean_squared_error(y_test, preds_lr)),
-            'R2': r2_score(y_test, preds_lr)
-        },
-        'Random Forest': {
-            'RMSE': np.sqrt(mean_squared_error(y_test, preds_rf)),
-            'R2': r2_score(y_test, preds_rf)
-        }
-    }
+    # Transform test data
+    X_test_processed = preprocessor.transform(X_test)
 
-    metrics_file = os.path.join(metrics_folder, 'evaluation_metrics.txt')
-    with open(metrics_file, 'w', encoding='utf-8') as f:  # <-- fix applied
-        f.write('📊 Model Evaluation Results:\n')
-        for model, vals in metrics.items():
-            f.write(f'{model}: RMSE={vals["RMSE"]:.2f}, R2={vals["R2"]:.2f}\n')
+    for model, name in zip(models, ["LinearRegression", "RandomForest"]):
+        y_pred = model.predict(X_test_processed)
+        mse = mean_squared_error(y_test, y_pred)
+        r2 = r2_score(y_test, y_pred)
+        metrics[name] = {"MSE": mse, "R2": r2}
 
-    print(f'📄 Saved evaluation metrics at {metrics_file}')
+    metrics_path = os.path.join(save_dir, "evaluation_metrics.txt")
+    with open(metrics_path, "w") as f:
+        for model_name, metric_values in metrics.items():
+            f.write(f"{model_name}:\n")
+            for k, v in metric_values.items():
+                f.write(f"  {k}: {v}\n")
+            f.write("\n")
+
+    print(f"Evaluation metrics saved in {metrics_path}")
     return metrics
 
-@task
-def log_to_aws(metrics):
-    # Simulated AWS logging
-    print('\n🪣 Logging metrics to AWS SageMaker Experiments (simulated)...')
-    for model, vals in metrics.items():
-        print(f'Logged {model} -> RMSE={vals["RMSE"]:.2f}, R2={vals["R2"]:.2f}')
-    print('✅ Metrics successfully logged!')
+# ---------- Flow ----------
 
-@flow
+@flow(name="ml-pipeline-flow")
 def ml_pipeline_flow():
-    # ------------------------
-    # Timestamped folders for this run
-    # ------------------------
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    logs_folder = f'logs/ml/{timestamp}'
-    models_folder = f'artifacts/ml/{timestamp}/models'
-    metrics_folder = f'artifacts/ml/{timestamp}/metrics'
-    os.makedirs(logs_folder, exist_ok=True)
-    os.makedirs(models_folder, exist_ok=True)
-    os.makedirs(metrics_folder, exist_ok=True)
-
-    print(f'🗂️ ML pipeline run folders created:\nLogs: {logs_folder}\nModels: {models_folder}\nMetrics: {metrics_folder}')
-
-    # ------------------------
-    # Run pipeline tasks
-    # ------------------------
+    """Main ML pipeline flow."""
     df = load_processed_data()
+    df = preprocess_data(df)
     X_train, X_test, y_train, y_test = split_data(df)
-    lr, rf = train_models(X_train, y_train, models_folder)
-    metrics = evaluate_models(lr, rf, X_test, y_test, metrics_folder)
-    log_to_aws(metrics)
+    lr_model, rf_model, preprocessor = train_models(X_train, y_train)
+    metrics = evaluate_models([lr_model, rf_model], preprocessor, X_test, y_test)
+    print("Pipeline finished. Metrics:", metrics)
 
-    print('🎯 ML Pipeline execution completed successfully!')
-
-if __name__ == '__main__':
+# Run the flow
+if __name__ == "__main__":
     ml_pipeline_flow()
