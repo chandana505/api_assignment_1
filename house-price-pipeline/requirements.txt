@@ -1,0 +1,13 @@
+# requirements.txt (recommended)
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+prefect==2.4.0   # or latest Prefect 2.x
+fastapi
+uvicorn
+boto3
+sagemaker      # optional (only if you want SageMaker Experiments)
+joblib
+kaggle         # optional (if you prefer to download via Kaggle API)
