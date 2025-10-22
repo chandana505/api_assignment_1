@@ -1,0 +1,3 @@
+📊 Model Evaluation Results:
+Linear Regression: RMSE=132083.64, R2=-1.50
+Random Forest: RMSE=27198.67, R2=0.89
