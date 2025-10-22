@@ -1,0 +1,43 @@
+2025-10-23 00:53:40.413775 - 🗂️ Data pipeline run folders created:
+Logs: logs/data/20251023_005340
+Artifacts: artifacts/data/20251023_005340
+2025-10-23 00:53:41.125291 - 📊 EDA started...
+2025-10-23 00:54:01.590071 - Saved correlation heatmap at artifacts/data/20251023_005340\eda_correlation.png
+2025-10-23 00:54:01.691037 - Saved scatterplot OverallQual vs YearBuilt at artifacts/data/20251023_005340\OverallQual_vs_YearBuilt.png
+2025-10-23 00:54:01.788395 - Saved scatterplot OverallQual vs YearRemodAdd at artifacts/data/20251023_005340\OverallQual_vs_YearRemodAdd.png
+2025-10-23 00:54:01.885781 - Saved scatterplot OverallQual vs TotalBsmtSF at artifacts/data/20251023_005340\OverallQual_vs_TotalBsmtSF.png
+2025-10-23 00:54:01.983130 - Saved scatterplot OverallQual vs GrLivArea at artifacts/data/20251023_005340\OverallQual_vs_GrLivArea.png
+2025-10-23 00:54:02.077587 - Saved scatterplot OverallQual vs FullBath at artifacts/data/20251023_005340\OverallQual_vs_FullBath.png
+2025-10-23 00:54:02.176539 - Saved scatterplot OverallQual vs GarageYrBlt at artifacts/data/20251023_005340\OverallQual_vs_GarageYrBlt.png
+2025-10-23 00:54:02.264656 - Saved scatterplot OverallQual vs GarageCars at artifacts/data/20251023_005340\OverallQual_vs_GarageCars.png
+2025-10-23 00:54:02.361897 - Saved scatterplot OverallQual vs GarageArea at artifacts/data/20251023_005340\OverallQual_vs_GarageArea.png
+2025-10-23 00:54:02.450135 - Saved scatterplot OverallQual vs SalePrice at artifacts/data/20251023_005340\OverallQual_vs_SalePrice.png
+2025-10-23 00:54:02.536800 - Saved scatterplot YearBuilt vs YearRemodAdd at artifacts/data/20251023_005340\YearBuilt_vs_YearRemodAdd.png
+2025-10-23 00:54:02.626517 - Saved scatterplot YearBuilt vs GarageYrBlt at artifacts/data/20251023_005340\YearBuilt_vs_GarageYrBlt.png
+2025-10-23 00:54:02.711236 - Saved scatterplot YearBuilt vs GarageCars at artifacts/data/20251023_005340\YearBuilt_vs_GarageCars.png
+2025-10-23 00:54:02.798836 - Saved scatterplot YearBuilt vs SalePrice at artifacts/data/20251023_005340\YearBuilt_vs_SalePrice.png
+2025-10-23 00:54:02.893103 - Saved scatterplot YearRemodAdd vs GarageYrBlt at artifacts/data/20251023_005340\YearRemodAdd_vs_GarageYrBlt.png
+2025-10-23 00:54:02.982698 - Saved scatterplot YearRemodAdd vs SalePrice at artifacts/data/20251023_005340\YearRemodAdd_vs_SalePrice.png
+2025-10-23 00:54:03.074540 - Saved scatterplot BsmtFinSF1 vs TotalBsmtSF at artifacts/data/20251023_005340\BsmtFinSF1_vs_TotalBsmtSF.png
+2025-10-23 00:54:03.162521 - Saved scatterplot BsmtFinSF1 vs BsmtFullBath at artifacts/data/20251023_005340\BsmtFinSF1_vs_BsmtFullBath.png
+2025-10-23 00:54:03.259566 - Saved scatterplot TotalBsmtSF vs 1stFlrSF at artifacts/data/20251023_005340\TotalBsmtSF_vs_1stFlrSF.png
+2025-10-23 00:54:03.355916 - Saved scatterplot TotalBsmtSF vs SalePrice at artifacts/data/20251023_005340\TotalBsmtSF_vs_SalePrice.png
+2025-10-23 00:54:03.445027 - Saved scatterplot 1stFlrSF vs GrLivArea at artifacts/data/20251023_005340\1stFlrSF_vs_GrLivArea.png
+2025-10-23 00:54:03.566719 - Saved scatterplot 1stFlrSF vs SalePrice at artifacts/data/20251023_005340\1stFlrSF_vs_SalePrice.png
+2025-10-23 00:54:03.657497 - Saved scatterplot 2ndFlrSF vs GrLivArea at artifacts/data/20251023_005340\2ndFlrSF_vs_GrLivArea.png
+2025-10-23 00:54:03.750987 - Saved scatterplot 2ndFlrSF vs HalfBath at artifacts/data/20251023_005340\2ndFlrSF_vs_HalfBath.png
+2025-10-23 00:54:03.848357 - Saved scatterplot 2ndFlrSF vs BedroomAbvGr at artifacts/data/20251023_005340\2ndFlrSF_vs_BedroomAbvGr.png
+2025-10-23 00:54:03.948995 - Saved scatterplot 2ndFlrSF vs TotRmsAbvGrd at artifacts/data/20251023_005340\2ndFlrSF_vs_TotRmsAbvGrd.png
+2025-10-23 00:54:04.042731 - Saved scatterplot GrLivArea vs FullBath at artifacts/data/20251023_005340\GrLivArea_vs_FullBath.png
+2025-10-23 00:54:04.139352 - Saved scatterplot GrLivArea vs BedroomAbvGr at artifacts/data/20251023_005340\GrLivArea_vs_BedroomAbvGr.png
+2025-10-23 00:54:04.225987 - Saved scatterplot GrLivArea vs TotRmsAbvGrd at artifacts/data/20251023_005340\GrLivArea_vs_TotRmsAbvGrd.png
+2025-10-23 00:54:04.317447 - Saved scatterplot GrLivArea vs SalePrice at artifacts/data/20251023_005340\GrLivArea_vs_SalePrice.png
+2025-10-23 00:54:04.418862 - Saved scatterplot FullBath vs TotRmsAbvGrd at artifacts/data/20251023_005340\FullBath_vs_TotRmsAbvGrd.png
+2025-10-23 00:54:04.517322 - Saved scatterplot FullBath vs SalePrice at artifacts/data/20251023_005340\FullBath_vs_SalePrice.png
+2025-10-23 00:54:04.608276 - Saved scatterplot BedroomAbvGr vs TotRmsAbvGrd at artifacts/data/20251023_005340\BedroomAbvGr_vs_TotRmsAbvGrd.png
+2025-10-23 00:54:04.695072 - Saved scatterplot TotRmsAbvGrd vs SalePrice at artifacts/data/20251023_005340\TotRmsAbvGrd_vs_SalePrice.png
+2025-10-23 00:54:04.782029 - Saved scatterplot GarageCars vs GarageArea at artifacts/data/20251023_005340\GarageCars_vs_GarageArea.png
+2025-10-23 00:54:04.879742 - Saved scatterplot GarageCars vs SalePrice at artifacts/data/20251023_005340\GarageCars_vs_SalePrice.png
+2025-10-23 00:54:04.988629 - Saved scatterplot GarageArea vs SalePrice at artifacts/data/20251023_005340\GarageArea_vs_SalePrice.png
+2025-10-23 00:54:04.989568 - 📊 EDA completed.
+2025-10-23 00:54:04.992524 - ✅ Data pipeline completed successfully!
