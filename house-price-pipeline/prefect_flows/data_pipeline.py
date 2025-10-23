@@ -10,9 +10,7 @@ from prefect import flow, task
 from prefect.task_runners import ConcurrentTaskRunner
 from datetime import datetime
 
-# ------------------------------
 # Setup folders for logs & artifacts
-# ------------------------------
 def setup_folders():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     logs_folder = f"logs/data/{timestamp}"
@@ -21,26 +19,20 @@ def setup_folders():
     os.makedirs(artifacts_folder, exist_ok=True)
     return logs_folder, artifacts_folder
 
-# ------------------------------
 # Data Ingestion
-# ------------------------------
 @task
 def load_data(path: str):
     df = pd.read_csv(path)
     print(f"Loaded data from {path}, shape: {df.shape}")
     return df
 
-# ------------------------------
 # Preprocessing
-# ------------------------------
 @task
 def preprocess(df: pd.DataFrame):
     print("Preprocessing started...")
 
-    # Summary stats
     print("Summary statistics:\n", df.describe(include='all'))
 
-    # Missing values
     print("Missing values per column:\n", df.isnull().sum())
 
     # Fill numeric columns with median
@@ -60,20 +52,16 @@ def preprocess(df: pd.DataFrame):
     print(f"Preprocessing completed. Shape: {df.shape}")
     return df
 
-# ------------------------------
 # Exploratory Data Analysis
-# ------------------------------
 @task
 def exploratory_data_analysis(df: pd.DataFrame, artifacts_folder: str):
     print("EDA started...")
 
-    # Encode categorical columns for correlation
     df_encoded = df.copy()
     le = LabelEncoder()
     for col in df_encoded.select_dtypes(include=['object']).columns:
         df_encoded[col] = le.fit_transform(df_encoded[col])
 
-    # Correlation heatmap
     corr = df_encoded.corr()
     plt.figure(figsize=(12, 10))
     sns.heatmap(corr, annot=False, cmap="coolwarm")
@@ -82,7 +70,6 @@ def exploratory_data_analysis(df: pd.DataFrame, artifacts_folder: str):
     plt.close()
     print(f"Saved correlation heatmap at {corr_path}")
 
-    # Scatterplots with SalePrice (top correlated features)
     target = 'SalePrice'
     numeric_cols = df_encoded.select_dtypes(include=[np.number]).columns.tolist()
     numeric_cols.remove(target)
@@ -96,7 +83,6 @@ def exploratory_data_analysis(df: pd.DataFrame, artifacts_folder: str):
         plt.close()
         print(f"Saved scatterplot {col} vs {target} at {scatter_path}")
 
-    # Feature importance using RandomForest
     X = df_encoded[top_corr_features]
     y = df_encoded[target]
     model = RandomForestRegressor(n_estimators=100, random_state=42)
@@ -114,9 +100,6 @@ def exploratory_data_analysis(df: pd.DataFrame, artifacts_folder: str):
 
     print("EDA completed.")
 
-# ------------------------------
-# Main Flow
-# ------------------------------
 @flow(name="data-pipeline-flow", task_runner=ConcurrentTaskRunner())
 def data_pipeline_flow():
     logs_folder, artifacts_folder = setup_folders()
@@ -125,8 +108,5 @@ def data_pipeline_flow():
     exploratory_data_analysis(df, artifacts_folder)
     print("Data pipeline completed successfully!")
 
-# ------------------------------
-# Run the pipeline
-# ------------------------------
 if __name__ == "__main__":
     data_pipeline_flow()

@@ -30,6 +30,5 @@ async def fetch_prefect_details():
             else:
                 print("No deployments found for this flow.")
 
-# Run the async function
 if __name__ == "__main__":
     asyncio.run(fetch_prefect_details())

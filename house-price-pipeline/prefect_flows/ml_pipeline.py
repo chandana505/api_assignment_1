@@ -91,7 +91,6 @@ def split_data(df: pd.DataFrame, target_col="SalePrice"):
     )
     logging.info(f"Split done. Train shape: {X_train.shape}, Test shape: {X_test.shape}")
 
-    # Save imputers
     joblib.dump(num_imputer, os.path.join(ARTIFACT_DIR, "num_imputer.pkl"))
     joblib.dump(cat_imputer, os.path.join(ARTIFACT_DIR, "cat_imputer.pkl"))
     logging.info(f"Imputers saved in {ARTIFACT_DIR}")
@@ -117,7 +116,6 @@ def train_models(X_train, y_train):
     rf = RandomForestRegressor(n_estimators=100, random_state=42)
     rf.fit(X_train_processed, y_train)
 
-    # Save models and preprocessor
     joblib.dump(lr, os.path.join(ARTIFACT_DIR, "linear_regression.pkl"))
     joblib.dump(rf, os.path.join(ARTIFACT_DIR, "random_forest.pkl"))
     joblib.dump(preprocessor, os.path.join(ARTIFACT_DIR, "preprocessor.pkl"))
@@ -143,7 +141,6 @@ def evaluate_models(models, preprocessor, X_test, y_test):
         # Log to Prefect Cloud
         logger.info(f"{name} Metrics: MSE={mse:.2f}, R2={r2:.4f}, MAE={mae:.2f}, RMSE={rmse:.2f}")
 
-    # Save metrics locally
     metrics_path_txt = os.path.join(ARTIFACT_DIR, "evaluation_metrics.txt")
     with open(metrics_path_txt, "w") as f:
         for model_name, metric_values in metrics.items():
@@ -154,7 +151,6 @@ def evaluate_models(models, preprocessor, X_test, y_test):
 
     return metrics
 
-# ---------- Flow ----------
 
 @flow(name="ml-pipeline-flow")
 def ml_pipeline_flow():
@@ -165,6 +161,5 @@ def ml_pipeline_flow():
     metrics = evaluate_models([lr_model, rf_model], preprocessor, X_test, y_test)
     logging.info(f"Pipeline finished. Metrics: {metrics}")
 
-# Run the flow
 if __name__ == "__main__":
     ml_pipeline_flow()
