@@ -23,7 +23,7 @@ deployments:
   schedule:
     cron: "*/2 * * * *"
   flow_name: data_pipeline_flow
-  entrypoint: prefect_flows/data_pipeline.py:data_pipeline_flow
+  entrypoint: house-price-pipeline/prefect_flows/data_pipeline.py:data_pipeline_flow
   parameters: {}
   work_pool:
     name: deafult-pool
