@@ -11,7 +11,7 @@ pull:
     access_token: null
 
 deployments:
-- name: data-pipeline-deploy
+- name: data-pipeline-deployFhiF
   version: null
   tags: []
   description: "Deploys the data pipeline every 2 minutes"
