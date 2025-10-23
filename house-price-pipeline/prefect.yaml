@@ -1,20 +1,15 @@
-# prefect.yaml
-
 name: house-price-pipeline
 prefect-version: 3.4.24
 
-# No Docker image build or push needed for local execution
 build: null
 push: null
 
-# Pull step to clone your GitHub repo
 pull:
 - prefect.deployments.steps.git_clone:
     repository: https://github.com/chandana505/api_assignment_1.git
     branch: main
-    access_token: null  # Add a token if your repo is private
+    access_token: null
 
-# Deployment configuration
 deployments:
 - name: data-pipeline-deploy
   version: null
@@ -26,6 +21,6 @@ deployments:
   entrypoint: house-price-pipeline/prefect_flows/data_pipeline.py:data_pipeline_flow
   parameters: {}
   work_pool:
-    name: deafult-pool
+    name: default-agent-pool
     work_queue_name: null
     job_variables: {}
